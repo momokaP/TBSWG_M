@@ -14,8 +14,6 @@ public class HexTile {
     private boolean isHovered = false; // hover 상태
     private boolean isClicked = false; // 클릭 상태
     private boolean dirty = true; // 타일의 상태가 변경되었을 때만 true로 설정
-    private boolean resource = false; // 자원 타일 여부
-    private int resourceAmount = 0; // 자원 양
     private int HEX_RADIUS; // 육각형의 반지름
     private int row;
     private int col;
@@ -49,16 +47,6 @@ public class HexTile {
     // 색상 설정
     public void setColor(String color) {
         this.color = color;
-    }
-
-    // 자원 추가
-    public void addResources(int amount) {
-        this.resourceAmount += amount;
-    }
-
-    // 자원 감소
-    public void subtractResources(int amount) {
-        this.resourceAmount -= amount;
     }
 
     // 색상 반전 함수

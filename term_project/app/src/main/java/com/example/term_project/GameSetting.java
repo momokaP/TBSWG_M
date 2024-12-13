@@ -2,15 +2,18 @@ package com.example.term_project;
 
 public class GameSetting {
     private static int hexRadius = 100;
+    private static int unitRadius = 50;
     private static HexTile[][] hexMap;
+    private static Unit[][] unitMap;
     private static int mapOffset_X = 0;
     private static int mapOffset_Y = 0;
     private static boolean initial = true;
 
     static {
-        int rows = 15;  // 행 크기
-        int cols = 15;  // 열 크기
-        hexMap = new HexTile[rows][cols];  // 15x15 크기의 배열로 초기화
+        int rows = 9;  // 행 크기
+        int cols = 9;  // 열 크기
+        hexMap = new HexTile[rows][cols];  // 9x9 크기의 배열로 초기화
+        unitMap = new Unit[rows][cols];
     }
 
     public static boolean isInitial() {
@@ -35,6 +38,22 @@ public class GameSetting {
 
     public static void setHexTile(int row, int col, HexTile tile) {
         hexMap[row][col] = tile;
+    }
+
+    public static void setUnitRadius(int unitRadius) {
+        GameSetting.unitRadius = unitRadius;
+    }
+
+    public static int getUnitRadius(){
+        return unitRadius;
+    }
+
+    public static Unit getUnit(int row, int col) {
+        return unitMap[row][col];
+    }
+
+    public static void setUnit(int row, int col, Unit unit) {
+        unitMap[row][col] = unit;
     }
 
     public static int getMapOffset_X() {

@@ -17,8 +17,8 @@ import androidx.annotation.NonNull;
 public class HexMapView extends View {
     private static final float SQRT_3 = (float)Math.sqrt(3);  // 루트3 값
     private static final float HEX_RADIUS = 100f; // 육각형 한 변의 길이
-    private static final int NUM_COLS = 15; // 열의 개수
-    private static final int NUM_ROWS = 15; // 행의 개수
+    private static final int NUM_COLS = 9; // 열의 개수
+    private static final int NUM_ROWS = 9; // 행의 개수
     private Paint paint;
     private HexagonTile hexagonTile;
     private int DownX;
@@ -48,6 +48,7 @@ public class HexMapView extends View {
         int offsetX = GameSetting.getMapOffset_X();
         int offsetY = GameSetting.getMapOffset_Y();
         int hexRadius = GameSetting.getHexRadius();
+        int unitRadius = GameSetting.getUnitRadius();
 
         scaleGestureDetector.onTouchEvent(event);
 
@@ -103,9 +104,23 @@ public class HexMapView extends View {
         int horizontalSpacing = (int) (Math.sqrt(3) * HEX_RADIUS); // 수평 간격
         int verticalSpacing = (int) (1.5 * HEX_RADIUS); // 수직 간격
 
+        int UINT_RADIUS = GameSetting.getUnitRadius();
+
         // 중앙 정렬을 위한 x, y 오프셋
         int offsetX = (canvas.getWidth() - cols * horizontalSpacing) / 2;
         int offsetY = (canvas.getHeight() - rows * verticalSpacing) / 2;
+
+        // 빨간색으로 설정할 좌표들
+        int[][] redTiles = {
+                {1, 1}, {1, 4}, {1, 7},
+                {4, 1}, {4, 4}, {4, 7},
+                {7, 1}, {7, 4}, {7, 7}
+        };
+
+        // 랜덤으로 빨간 타일을 하나 선택
+        int randomIndex = (int) (Math.random() * redTiles.length);
+        int randomRow = redTiles[randomIndex][0];
+        int randomCol = redTiles[randomIndex][1];
 
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
@@ -116,12 +131,18 @@ public class HexMapView extends View {
                 x = x + offsetX;
                 y = y + offsetY;
 
-                //hexMap[row][col];
                 if (GameSetting.isInitial()) {
                     HexTile tile = new HexTile(x, y);
                     GameSetting.setHexTile(row, col, tile);
 
-                    tile.setColor("lightblue"); // 색상 설정
+                    // 빨간색으로 설정할 타일인지 확인
+                    for (int[] redTile : redTiles) {
+                        if (redTile[0] == row && redTile[1] == col) {
+                            tile.setColor("yellow"); // 빨간색으로 설정
+                            break;
+                        }
+                    }
+
                     tile.setDirty(true);
                     tile.setHexRadius(GameSetting.getHexRadius());
                     tile.setRow(row);
@@ -130,41 +151,72 @@ public class HexMapView extends View {
                     // 타일 그리기
                     tile.draw(canvas, paint, gameOffsetX, gameOffsetY);
                 } else {
-                    HexTile tile = GameSetting.getHexTile(row,col);
+                    HexTile tile = GameSetting.getHexTile(row, col);
                     tile.setPosition(x, y); // 위치 업데이트
 
-                    tile.setColor("lightblue"); // 색상 설정
+                    // 빨간색으로 설정할 타일인지 확인
+                    for (int[] redTile : redTiles) {
+                        if (redTile[0] == row && redTile[1] == col) {
+                            tile.setColor("yellow"); // 빨간색으로 설정
+                            break;
+                        }
+                    }
+
                     tile.setDirty(true);
                     tile.setHexRadius(GameSetting.getHexRadius());
 
                     // 타일 그리기
                     tile.draw(canvas, paint, gameOffsetX, gameOffsetY);
+
+                    Unit unit = GameSetting.getUnit(row, col);
+                    if(unit != null){
+                        unit.setPosition(x, y);
+                        unit.setUnitRadius(GameSetting.getUnitRadius());
+                        unit.draw(canvas, paint, gameOffsetX, gameOffsetY);
+                    }
                 }
             }
         }
-        GameSetting.getHexTile(0,8).setColor("red");
-        GameSetting.getHexTile(0,8).setDirty(true);
-        GameSetting.getHexTile(0,8).draw(canvas, paint, gameOffsetX, gameOffsetY);
-        if (GameSetting.isInitial()) GameSetting.setInitial(false);
+
+        if (GameSetting.isInitial()) {
+            // 빨간 타일에 유닛 그리기
+            HexTile randomTile = GameSetting.getHexTile(randomRow, randomCol);
+            if (randomTile != null) {
+                System.out.println("유닛 "+UINT_RADIUS+" "+randomTile.getX()+" "+randomTile.getY());
+
+                Unit unit = new Unit(randomTile.getX(), randomTile.getY());
+                GameSetting.setUnit(randomTile.getRow(), randomTile.getCol(), unit);
+
+                unit.setColor("blue"); // 유닛의 기본 색상을 설정
+
+                unit.setUnitRadius(GameSetting.getUnitRadius());
+                unit.setRow(randomTile.getRow());
+                unit.setCol(randomTile.getCol());
+
+                unit.draw(canvas, paint, gameOffsetX, gameOffsetY);
+            }
+            GameSetting.setInitial(false);
+        }
     }
 
     private class ScaleListener implements ScaleGestureDetector.OnScaleGestureListener {
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            int oldRaidus = GameSetting.getHexRadius();
+            int oldHexRaidus = GameSetting.getHexRadius();
             int offsetX = GameSetting.getMapOffset_X();
             int offsetY = GameSetting.getMapOffset_Y();
 
             // 스케일 팩터 계산
             float scaleFactor = detector.getScaleFactor();
-            int newRadius = (int) (GameSetting.getHexRadius() * scaleFactor);
+            int newHexRadius = (int) (GameSetting.getHexRadius() * scaleFactor);
 
             // HEX_RADIUS 크기 제한 (최소/최대 크기 설정)
-            newRadius = Math.max(50, Math.min(newRadius, 150)); // 최소 50, 최대 300
-            GameSetting.setHexRadius(newRadius);
+            newHexRadius = Math.max(50, Math.min(newHexRadius, 150)); // 최소 50, 최대 `50
+            GameSetting.setHexRadius(newHexRadius);
+            GameSetting.setUnitRadius(newHexRadius/2);
 
-            float scaleChange = (float) newRadius / oldRaidus;
-            System.out.println(scaleChange+","+oldRaidus+","+GameSetting.getHexRadius());
+            float scaleChange = (float) newHexRadius / oldHexRaidus;
+            System.out.println(scaleChange+","+oldHexRaidus+","+GameSetting.getHexRadius());
             float x = offsetX * scaleChange;
             float y = offsetY * scaleChange;
             GameSetting.setMapOffset_X((int) x);
