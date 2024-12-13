@@ -7,11 +7,23 @@ import android.graphics.Paint;
 public class Unit {
     private int x, y; // 유닛의 중심 좌표
     private String defaultColor = "blue"; // 기본 색상
+
     private String color = defaultColor; // 현재 색상
     private boolean isClicked = false; // 클릭 상태
     private int UNIT_RADIUS; // 육각형의 반지름
     private int row;
     private int col;
+
+    private String user;
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
 
     public int getRow() {
         return row;
@@ -38,6 +50,9 @@ public class Unit {
     // 색상 설정
     public void setColor(String color) {
         this.color = color;
+    }
+    public String getColor() {
+        return color;
     }
 
     // 유닛 그리기

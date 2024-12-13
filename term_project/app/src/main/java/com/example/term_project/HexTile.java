@@ -9,7 +9,7 @@ import android.graphics.Region;
 
 public class HexTile {
     private int x, y; // 타일의 중심 좌표
-    private String defaultColor = "lightblue"; // 기본 색상
+    private String defaultColor = "silver"; // 기본 색상
     private String color = defaultColor; // 현재 색상
     private boolean isHovered = false; // hover 상태
     private boolean isClicked = false; // 클릭 상태
@@ -18,6 +18,22 @@ public class HexTile {
     private int row;
     private int col;
     private boolean isMovable; // 이동 가능 여부
+
+    public void setIsproduction(boolean isproduction) {
+        this.isproduction = isproduction;
+    }
+
+    private boolean isproduction = false;
+
+    private String user;
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
 
     public boolean isMovable() {
         return isMovable;
@@ -60,10 +76,10 @@ public class HexTile {
 
     // 색상 반전 함수
     private String invertColor(String color) {
-        if (color.equals("red")) return "cyan";
         if (color.equals("lightblue")) return "darkblue";
         if (color.equals("yellow")) return "orange";
         if (color.equals("gold")) return "orange";
+        if (color.equals("silver")) return "gray";
         return color;
     }
 
@@ -71,40 +87,114 @@ public class HexTile {
     public void draw(Canvas canvas, Paint paint, float offsetX, float offsetY) {
         if (!dirty) return;
 
-        Path path = new Path();
+        // 큰 육각형을 그리기 위한 점 계산
+        float[] hexX = new float[6];
+        float[] hexY = new float[6];
+
         for (int i = 0; i < 6; i++) {
             float angle = (float) (Math.PI / 3 * (i + 0.5)); // 각도를 30도 회전
-            float xPos = x + HEX_RADIUS * (float) Math.cos(angle) + offsetX;
-            float yPos = y + HEX_RADIUS * (float) Math.sin(angle) + offsetY;
-
-            if (i == 0) {
-                path.moveTo(xPos, yPos);
-            } else {
-                path.lineTo(xPos, yPos);
-            }
+            hexX[i] = x + HEX_RADIUS * (float) Math.cos(angle) + offsetX;
+            hexY[i] = y + HEX_RADIUS * (float) Math.sin(angle) + offsetY;
         }
-        path.close();
 
+        // 육각형 내부를 색으로 채우기
+        Path hexPath = new Path();
+        hexPath.moveTo(hexX[0], hexY[0]);
+        for (int i = 1; i < 6; i++) {
+            hexPath.lineTo(hexX[i], hexY[i]);
+        }
+        hexPath.close();
+
+        // 육각형 테두리를 그리기
         paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.BLACK); // 선 색깔
-        canvas.drawPath(path, paint);
+        paint.setColor(Color.BLACK);
+        canvas.drawPath(hexPath, paint);
 
-        // hover 상태일 경우 색상 반전
         paint.setStyle(Paint.Style.FILL);
 
         String displayColor;
-
         if (isHovered) {
             displayColor = invertColor(color); // 마우스 오버 시 색상 반전
-        } else if (isMovable) {
-            displayColor = "green"; // 이동 가능 타일은 초록색
         } else {
             displayColor = color; // 기본 색상
         }
-
         paint.setColor(getColorFromString(displayColor));
 
-        canvas.drawPath(path, paint);
+        canvas.drawPath(hexPath, paint);
+
+        // user가 null이 아닐 때, 육각형을 삼각형으로 나누고 각 삼각형의 테두리를 하얗게 그리기
+        if (isproduction) {
+            paint.setColor(Color.BLACK);
+            paint.setStyle(Paint.Style.STROKE); // 선만 그리도록 설정
+
+            for (int i = 0; i < 6; i++) {
+                Path trianglePath = new Path();
+                trianglePath.moveTo(x + offsetX, y + offsetY); // 중심점
+                trianglePath.lineTo(hexX[i], hexY[i]); // 현재 꼭지점
+                trianglePath.lineTo(hexX[(i + 1) % 6], hexY[(i + 1) % 6]); // 다음 꼭지점
+                trianglePath.close();
+
+                canvas.drawPath(trianglePath, paint); // 삼각형 테두리 그리기
+            }
+        }
+
+        // 작은 육각형 그리기 (user가 null이 아닐 때)
+        if (isproduction) {
+            float smallHexRadius = HEX_RADIUS * 0.5f; // 작은 육각형의 반지름을 기존 반지름의 50%로 설정
+            Path smallPath = new Path();
+
+            for (int i = 0; i < 6; i++) {
+                float angle = (float) (Math.PI / 3 * (i + 0.5));
+                float xPos = x + smallHexRadius * (float) Math.cos(angle) + offsetX;
+                float yPos = y + smallHexRadius * (float) Math.sin(angle) + offsetY;
+
+                if (i == 0) {
+                    smallPath.moveTo(xPos, yPos);
+                } else {
+                    smallPath.lineTo(xPos, yPos);
+                }
+            }
+            smallPath.close();
+
+            if(user != null) {
+                paint.setColor(getColorFromString(displayColor)); // 작은 육각형 색상
+            }
+            else {
+                paint.setColor(Color.WHITE);
+            }
+
+            if(isHovered) paint.setColor(Color.WHITE);
+
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawPath(smallPath, paint);
+        }
+
+        if (isMovable) {
+            float smallHexRadius = HEX_RADIUS; // 작은 육각형의 반지름을 기존 반지름의 50%로 설정
+            Path smallPath = new Path();
+
+            for (int i = 0; i < 6; i++) {
+                float angle = (float) (Math.PI / 3 * (i + 0.5));
+                float xPos = x + smallHexRadius * (float) Math.cos(angle) + offsetX;
+                float yPos = y + smallHexRadius * (float) Math.sin(angle) + offsetY;
+
+                if (i == 0) {
+                    smallPath.moveTo(xPos, yPos);
+                } else {
+                    smallPath.lineTo(xPos, yPos);
+                }
+            }
+            smallPath.close();
+
+            // 투명한 하얀색 설정
+            paint.setColor(Color.WHITE);
+            paint.setAlpha(128); // 투명도 설정 (0: 완전 투명, 255: 완전 불투명)
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawPath(smallPath, paint);
+
+            // 투명도를 255로 되돌려 다른 그리기 작업에 영향 없도록 설정
+            paint.setAlpha(255);
+        }
 
         dirty = false;
     }
@@ -113,7 +203,7 @@ public class HexTile {
     private int getColorFromString(String color) {
         switch (color) {
             case "red":
-                return Color.RED;
+                return Color.parseColor("#E04375");
             case "cyan":
                 return Color.CYAN;
             case "lightblue":
@@ -124,6 +214,14 @@ public class HexTile {
                 return Color.YELLOW;
             case "orange":
                 return Color.parseColor("#FFA500"); // Orange
+            case "silver":
+                return Color.parseColor("#C0C0C0");
+            case "gray":
+                return Color.parseColor("#808080");
+            case "blue":
+                return Color.parseColor("#00A1FF");
+            case "transparent":
+                return Color.argb(128, 255, 255, 255);
             default:
                 return Color.WHITE;
         }

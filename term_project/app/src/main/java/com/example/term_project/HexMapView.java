@@ -11,6 +11,8 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 
 // 육각형 맵을 그리는 클래스
@@ -114,9 +116,15 @@ public class HexMapView extends View {
                                 if (targetTile.isMovable()) {
                                     GameSetting.moveUnit(selectedUnit, row, col);
                                     GameSetting.setSelectedunit(null); // 선택 해제
-
                                     // 이동 가능 상태 초기화
                                     GameSetting.resetMovableTiles();
+
+                                    // TextView에 텍스트 설정
+                                    if(selectedUnit.getUser() == "user1"){
+                                        int howmManyTiles = GameSetting.getUser(selectedUnit.getUser()).getHowManyTiles();
+                                        MainActivity.howmany_tile.setText("점령한 타일 수 : " + howmManyTiles);
+                                    }
+
                                     invalidate(); // 화면 다시 그리기
                                     return true;
                                 }
@@ -157,9 +165,21 @@ public class HexMapView extends View {
         };
 
         // 랜덤으로 빨간 타일을 하나 선택
-        int randomIndex = (int) (Math.random() * redTiles.length);
-        int randomRow = redTiles[randomIndex][0];
-        int randomCol = redTiles[randomIndex][1];
+        // 첫 번째 랜덤 인덱스 선택
+        int randomIndex1 = (int) (Math.random() * redTiles.length);
+
+        // 두 번째 랜덤 인덱스를 첫 번째와 다르게 선택
+        int randomIndex2;
+        do {
+            randomIndex2 = (int) (Math.random() * redTiles.length);
+        } while (randomIndex1 == randomIndex2);
+
+        // 좌표 가져오기
+        int randomRow1 = redTiles[randomIndex1][0];
+        int randomCol1 = redTiles[randomIndex1][1];
+
+        int randomRow2 = redTiles[randomIndex2][0];
+        int randomCol2 = redTiles[randomIndex2][1];
 
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
@@ -177,7 +197,7 @@ public class HexMapView extends View {
                     // 빨간색으로 설정할 타일인지 확인
                     for (int[] redTile : redTiles) {
                         if (redTile[0] == row && redTile[1] == col) {
-                            tile.setColor("yellow"); // 빨간색으로 설정
+                            tile.setIsproduction(true);
                             break;
                         }
                     }
@@ -196,7 +216,7 @@ public class HexMapView extends View {
                     // 빨간색으로 설정할 타일인지 확인
                     for (int[] redTile : redTiles) {
                         if (redTile[0] == row && redTile[1] == col) {
-                            tile.setColor("yellow"); // 빨간색으로 설정
+                            tile.setIsproduction(true);
                             break;
                         }
                     }
@@ -218,21 +238,43 @@ public class HexMapView extends View {
         }
 
         if (GameSetting.isInitial()) {
-            // 빨간 타일에 유닛 그리기
-            HexTile randomTile = GameSetting.getHexTile(randomRow, randomCol);
-            if (randomTile != null) {
-                System.out.println("유닛 "+UINT_RADIUS+" "+randomTile.getX()+" "+randomTile.getY());
+            User user1 = new User("user1","blue");
+            GameSetting.addUser(user1.getName(), user1);
+            HexTile randomTile1 = GameSetting.getHexTile(randomRow1, randomCol1);
 
-                Unit unit = new Unit(randomTile.getX(), randomTile.getY());
-                GameSetting.setUnit(randomTile.getRow(), randomTile.getCol(), unit);
+            if (randomTile1 != null) {
+                Unit unit1 = new Unit(randomTile1.getX(), randomTile1.getY());
+                GameSetting.setUnit(randomTile1.getRow(), randomTile1.getCol(), unit1);
 
-                unit.setColor("blue"); // 유닛의 기본 색상을 설정
+                unit1.setUser(user1.getName());
+                user1.addHowManyUnits(1);
+                MainActivity.howmany_unit.setText("소유한 유닛 수 : " + user1.getHowManyUnits());
+                unit1.setColor(user1.getColor());
 
-                unit.setUnitRadius(GameSetting.getUnitRadius());
-                unit.setRow(randomTile.getRow());
-                unit.setCol(randomTile.getCol());
+                unit1.setUnitRadius(GameSetting.getUnitRadius());
+                unit1.setRow(randomTile1.getRow());
+                unit1.setCol(randomTile1.getCol());
 
-                unit.draw(canvas, paint, gameOffsetX, gameOffsetY);
+                unit1.draw(canvas, paint, gameOffsetX, gameOffsetY);
+            }
+
+            User user2 = new User("user2", "red");
+            GameSetting.addUser(user2.getName(), user2);
+            HexTile randomTile2 = GameSetting.getHexTile(randomRow2, randomCol2);
+
+            if (randomTile2 != null) {
+                Unit unit2 = new Unit(randomTile2.getX(), randomTile2.getY());
+                GameSetting.setUnit(randomTile2.getRow(), randomTile2.getCol(), unit2);
+
+                unit2.setUser(user2.getName());
+                user2.addHowManyUnits(1);
+                unit2.setColor(user2.getColor());
+
+                unit2.setUnitRadius(GameSetting.getUnitRadius());
+                unit2.setRow(randomTile2.getRow());
+                unit2.setCol(randomTile2.getCol());
+
+                unit2.draw(canvas, paint, gameOffsetX, gameOffsetY);
             }
             GameSetting.setInitial(false);
         }
@@ -252,7 +294,7 @@ public class HexMapView extends View {
             // HEX_RADIUS 크기 제한 (최소/최대 크기 설정)
             newHexRadius = Math.max(50, Math.min(newHexRadius, 150)); // 최소 50, 최대 `50
             GameSetting.setHexRadius(newHexRadius);
-            GameSetting.setUnitRadius(newHexRadius/2);
+            GameSetting.setUnitRadius((int) (newHexRadius*0.7));
 
             float scaleChange = (float) newHexRadius / oldHexRaidus;
             System.out.println(scaleChange+","+oldHexRaidus+","+GameSetting.getHexRadius());

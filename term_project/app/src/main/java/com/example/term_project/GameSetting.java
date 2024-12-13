@@ -1,10 +1,16 @@
 package com.example.term_project;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 public class GameSetting {
     private static int hexRadius = 100;
-    private static int unitRadius = 50;
+    private static int unitRadius = 70;
     private static HexTile[][] hexMap;
     private static Unit[][] unitMap;
+
+    private static Map<String, User> users = new HashMap<>();
     private static Unit selectedunit;
     private static int mapOffset_X = 0;
     private static int mapOffset_Y = 0;
@@ -12,12 +18,28 @@ public class GameSetting {
 
     private static final int rows = 9;
     private static final int cols = 9;
+    private static final int howManyUser = 2;
 
     private static final int range = 1;
 
     static {
         hexMap = new HexTile[rows][cols];  // 9x9 크기의 배열로 초기화
         unitMap = new Unit[rows][cols];
+    }
+
+    // 사용자 추가 또는 수정
+    public static void addUser(String name, User user) {
+        users.put(name, user);
+    }
+
+    // 사용자 조회
+    public static User getUser(String name) {
+        return users.get(name);
+    }
+
+    // 사용자 삭제
+    public static void removeUser(String name) {
+        users.remove(name);
     }
 
     public static boolean isInitial() {
@@ -131,8 +153,19 @@ public class GameSetting {
 
             // 점령 처리
             HexTile targetTile = getHexTile(targetRow, targetCol);
-            if (targetTile != null) {
-                //targetTile.setColor(unit.getColor()); // 유닛의 색상으로 타일 점령
+            if (targetTile != null && !Objects.equals(targetTile.getUser(), unit.getUser())) {
+                if(targetTile.getUser() != null && targetTile.getUser() != unit.getUser()){
+                    System.out.println(targetTile.getUser()+" "+unit.getUser());
+                    GameSetting.getUser(targetTile.getUser()).addHowManyTiles(-1);
+                    // TextView에 텍스트 설정
+                    if(targetTile.getUser() == "user1"){
+                        int howmManyTiles = GameSetting.getUser(targetTile.getUser()).getHowManyTiles();
+                        MainActivity.howmany_tile.setText("점령한 타일 수 : " + howmManyTiles);
+                    }
+                }
+                targetTile.setUser(unit.getUser());
+                targetTile.setColor(unit.getColor());
+                getUser(unit.getUser()).addHowManyTiles(1);
             }
         } else {
             // 잘못된 이동 시 로그 출력 (디버깅용)
