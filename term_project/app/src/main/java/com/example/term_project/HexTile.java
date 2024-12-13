@@ -17,6 +17,15 @@ public class HexTile {
     private int HEX_RADIUS; // 육각형의 반지름
     private int row;
     private int col;
+    private boolean isMovable; // 이동 가능 여부
+
+    public boolean isMovable() {
+        return isMovable;
+    }
+
+    public void setMovable(boolean movable) {
+        isMovable = movable;
+    }
 
     public int getRow() {
         return row;
@@ -82,7 +91,19 @@ public class HexTile {
 
         // hover 상태일 경우 색상 반전
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(getColorFromString(isHovered ? invertColor(color) : color)); // 면 색깔
+
+        String displayColor;
+
+        if (isHovered) {
+            displayColor = invertColor(color); // 마우스 오버 시 색상 반전
+        } else if (isMovable) {
+            displayColor = "green"; // 이동 가능 타일은 초록색
+        } else {
+            displayColor = color; // 기본 색상
+        }
+
+        paint.setColor(getColorFromString(displayColor));
+
         canvas.drawPath(path, paint);
 
         dirty = false;
@@ -168,4 +189,11 @@ public class HexTile {
         this.y=y;
     }
 
+    public void setHovered(boolean hovered) {
+        isHovered = hovered;
+    }
+
+    public boolean isHovered() {
+        return isHovered;
+    }
 }

@@ -3,7 +3,6 @@ package com.example.term_project;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 
 public class Unit {
     private int x, y; // 유닛의 중심 좌표
@@ -78,11 +77,11 @@ public class Unit {
     // 클릭 상태 업데이트
     public void updateClick(float mouseX, float mouseY, float offsetX, float offsetY) {
         boolean wasClicked = isClicked;
-        isClicked = isPointInCircle(mouseX, mouseY, offsetX, offsetY); // 클릭 상태 업데이트
+        isClicked = isPointInUnit(mouseX, mouseY, offsetX, offsetY); // 클릭 상태 업데이트
     }
 
     // 점이 원 내부에 있는지 확인
-    private boolean isPointInCircle(float mouseX, float mouseY, float offsetX, float offsetY) {
+    public boolean isPointInUnit(float mouseX, float mouseY, float offsetX, float offsetY) {
         float dx = mouseX - (x + offsetX);
         float dy = mouseY - (y + offsetY);
         return Math.sqrt(dx * dx + dy * dy) <= UNIT_RADIUS; // 원의 반지름 이내에 있는지 확인

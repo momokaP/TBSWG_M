@@ -56,8 +56,20 @@ public class HexMapView extends View {
             case MotionEvent.ACTION_DOWN:
                 DownX = (int) event.getX();
                 DownY = (int) event.getY();
+
                 for(int row=0; row<NUM_ROWS; row++){
                     for(int col=0; col<NUM_COLS; col++){
+                        // 유닛 클릭 확인
+                        Unit unit = GameSetting.getUnit(row, col);
+                        if (unit != null && unit.isPointInUnit(DownX, DownY, offsetX, offsetY)) {
+                            GameSetting.setSelectedunit(unit);
+                            GameSetting.resetHoverTiles();
+                            // 이동 가능 타일 강조
+                            GameSetting.highlightMovableTiles(unit);
+                            invalidate(); // 화면 다시 그리기
+                            return true;
+                        }
+
                         HexTile tile = GameSetting.getHexTile(row, col);
                         tile.updateHover(DownX,DownY,offsetX,offsetY);
                     }
@@ -93,6 +105,33 @@ public class HexMapView extends View {
 
             case MotionEvent.ACTION_UP:
                 multiTouch=false;
+                Unit selectedUnit = GameSetting.getSelectedunit();
+                if (selectedUnit != null) {
+                    for (int row = 0; row < NUM_ROWS; row++) {
+                        for (int col = 0; col < NUM_COLS; col++) {
+                            HexTile targetTile = GameSetting.getHexTile(row, col);
+                            if(targetTile.isHovered()) {
+                                if (targetTile.isMovable()) {
+                                    GameSetting.moveUnit(selectedUnit, row, col);
+                                    GameSetting.setSelectedunit(null); // 선택 해제
+
+                                    // 이동 가능 상태 초기화
+                                    GameSetting.resetMovableTiles();
+                                    invalidate(); // 화면 다시 그리기
+                                    return true;
+                                }
+
+                                if(GameSetting.getUnit(row, col)==null){
+                                    System.out.println("아님");
+                                    // 이동 가능 상태 초기화
+                                    GameSetting.resetMovableTiles();
+                                    invalidate(); // 화면 다시 그리기
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
                 break;
         }
 
