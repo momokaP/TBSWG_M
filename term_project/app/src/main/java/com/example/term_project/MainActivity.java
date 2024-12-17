@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
 
     // GPT API 호출 메서드
     private void callGPTAPI(String prompt) {
-        String apiKey = "ㅁㄴㅇㄹ"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
+        String apiKey = "asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
         Retrofit retrofit = RetrofitClient.getClient(apiKey);
         GPTService gptService = retrofit.create(GPTService.class);
 
