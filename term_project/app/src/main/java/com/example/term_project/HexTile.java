@@ -4,8 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
-import android.graphics.Region;
 
 public class HexTile {
     private int x, y; // 타일의 중심 좌표
@@ -17,11 +15,8 @@ public class HexTile {
     private int HEX_RADIUS; // 육각형의 반지름
     private int row;
     private int col;
-    private boolean isMovable; // 이동 가능 여부
-
-    public void setIsproduction(boolean isproduction) {
-        this.isproduction = isproduction;
-    }
+    private boolean isMovable = false; // 이동 가능 여부
+    private boolean isAttackable = false; // 공격 가능 여부
 
     private boolean isproduction = false;
 
@@ -35,12 +30,28 @@ public class HexTile {
         this.user = user;
     }
 
+    public void setIsproduction(boolean isproduction) {
+        this.isproduction = isproduction;
+    }
+
+    public boolean Isproduction() {
+        return isproduction;
+    }
+
     public boolean isMovable() {
         return isMovable;
     }
 
     public void setMovable(boolean movable) {
         isMovable = movable;
+    }
+
+    public boolean isAttackable() {
+        return isAttackable;
+    }
+
+    public void setAttackable(boolean attackable) {
+        isAttackable = attackable;
     }
 
     public int getRow() {
@@ -170,7 +181,7 @@ public class HexTile {
         }
 
         if (isMovable) {
-            float smallHexRadius = HEX_RADIUS; // 작은 육각형의 반지름을 기존 반지름의 50%로 설정
+            float smallHexRadius = HEX_RADIUS;
             Path smallPath = new Path();
 
             for (int i = 0; i < 6; i++) {
@@ -188,6 +199,33 @@ public class HexTile {
 
             // 투명한 하얀색 설정
             paint.setColor(Color.WHITE);
+            paint.setAlpha(128); // 투명도 설정 (0: 완전 투명, 255: 완전 불투명)
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawPath(smallPath, paint);
+
+            // 투명도를 255로 되돌려 다른 그리기 작업에 영향 없도록 설정
+            paint.setAlpha(255);
+        }
+
+        if (isAttackable) {
+            float smallHexRadius = HEX_RADIUS;
+            Path smallPath = new Path();
+
+            for (int i = 0; i < 6; i++) {
+                float angle = (float) (Math.PI / 3 * (i + 0.5));
+                float xPos = x + smallHexRadius * (float) Math.cos(angle) + offsetX;
+                float yPos = y + smallHexRadius * (float) Math.sin(angle) + offsetY;
+
+                if (i == 0) {
+                    smallPath.moveTo(xPos, yPos);
+                } else {
+                    smallPath.lineTo(xPos, yPos);
+                }
+            }
+            smallPath.close();
+
+            // 투명한 하얀색 설정
+            paint.setColor(Color.YELLOW);
             paint.setAlpha(128); // 투명도 설정 (0: 완전 투명, 255: 완전 불투명)
             paint.setStyle(Paint.Style.FILL);
             canvas.drawPath(smallPath, paint);

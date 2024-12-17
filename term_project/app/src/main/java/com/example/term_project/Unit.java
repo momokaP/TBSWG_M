@@ -5,6 +5,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 public class Unit {
+    private String name = "유닛";
+
     private int x, y; // 유닛의 중심 좌표
     private String defaultColor = "blue"; // 기본 색상
 
@@ -14,6 +16,11 @@ public class Unit {
     private int row;
     private int col;
 
+    private int health = 3;
+    private int damage = 1;
+
+    private boolean isMovable = true; // 이동 가능 여부
+
     private String user;
 
     public String getUser() {
@@ -22,6 +29,38 @@ public class Unit {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public boolean isMovable() {
+        return isMovable;
+    }
+
+    public void setMovable(boolean movable) {
+        isMovable = movable;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void addHealth(int health) {
+        this.health += health;
+    }
+
+    public int getDamage() {
+        return damage;
+    }
+
+    public void setDamage(int damage) {
+        this.damage = damage;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 
@@ -63,7 +102,13 @@ public class Unit {
         canvas.drawCircle(x + offsetX, y + offsetY, UNIT_RADIUS, paint);
 
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(getColorFromString(color));
+
+        if(isMovable){
+            paint.setColor(getColorFromString(color));
+        }else{
+            paint.setColor(getColorFromString(invertColor(color)));
+        }
+
         canvas.drawCircle(x + offsetX, y + offsetY, UNIT_RADIUS, paint);
     }
 
@@ -76,10 +121,10 @@ public class Unit {
                 return Color.BLUE;
             case "cyan":
                 return Color.CYAN;
-            case "lightblue":
-                return Color.parseColor("#ADD8E6"); // LightBlue
             case "darkblue":
-                return Color.parseColor("#00008B"); // DarkBlue
+                return Color.parseColor("#000064"); // DarkBlue
+            case "darkred":
+                return Color.parseColor("#640000");
             case "yellow":
                 return Color.YELLOW;
             case "orange":
@@ -87,6 +132,12 @@ public class Unit {
             default:
                 return Color.WHITE;
         }
+    }
+
+    private String invertColor(String color) {
+        if (color.equals("red")) return "darkred";
+        if (color.equals("blue")) return "darkblue";
+        return color;
     }
 
     // 클릭 상태 업데이트
@@ -112,6 +163,10 @@ public class Unit {
     public void setPosition(int x, int y) {
         this.x=x;
         this.y=y;
+    }
+
+    public boolean isDead() {
+        return this.health <= 0;
     }
 
 }

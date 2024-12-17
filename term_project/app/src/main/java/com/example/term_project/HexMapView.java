@@ -4,16 +4,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Rect;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
 
 // 육각형 맵을 그리는 클래스
 public class HexMapView extends View {
@@ -27,6 +21,9 @@ public class HexMapView extends View {
     private int DownY;
     private ScaleGestureDetector scaleGestureDetector;
     private boolean multiTouch = false;
+
+    User user1 = new User("user1","blue");
+    User user2 = new User("user2", "red");
 
     public HexMapView(Context context) {
         super(context);
@@ -63,17 +60,48 @@ public class HexMapView extends View {
                     for(int col=0; col<NUM_COLS; col++){
                         // 유닛 클릭 확인
                         Unit unit = GameSetting.getUnit(row, col);
+                        HexTile targetTile = GameSetting.getHexTile(row, col);
+
                         if (unit != null && unit.isPointInUnit(DownX, DownY, offsetX, offsetY)) {
+                            // 유닛을 터치 했다면
+                            Unit selectedUnit = GameSetting.getSelectedunit();
+
+                            if (targetTile.isAttackable() && selectedUnit != null &&
+                                !selectedUnit.getUser().equals(unit.getUser())) {
+                                // 이동 가능한 타일 안의 다른 유저의 유닛을 터치했을 때 공격
+                                selectedUnit.setMovable(false);
+
+                                unit.addHealth(-1); // 체력 1 감소
+
+                                // 체력이 0 이하이면 유닛 제거
+                                if (unit.isDead()) {
+                                    GameSetting.setUnit(row, col, null);
+                                    System.out.println("상대 유닛이 제거되었습니다.");
+                                } else {
+                                    System.out.println("유닛이 공격받았습니다. 남은 체력: " + unit.getHealth());
+                                }
+
+                                // 선택된 유닛 해제 및 상태 리셋
+                                GameSetting.setSelectedunit(null);
+                                GameSetting.resetMovableTiles();
+                                GameSetting.resetAttackableTiles();
+                                invalidate();
+                                return true;
+                            }
+
+                            showUnitStatusPanel(unit);
                             GameSetting.setSelectedunit(unit);
                             GameSetting.resetHoverTiles();
                             // 이동 가능 타일 강조
-                            GameSetting.highlightMovableTiles(unit);
+                            if(unit.isMovable()){
+                                GameSetting.highlightMovableTiles(unit);
+                            }
                             invalidate(); // 화면 다시 그리기
                             return true;
                         }
 
-                        HexTile tile = GameSetting.getHexTile(row, col);
-                        tile.updateHover(DownX,DownY,offsetX,offsetY);
+                        //clearStatusPanel();
+                        targetTile.updateHover(DownX,DownY,offsetX,offsetY);
                     }
                 }
                 Rect dirtyRect = new Rect(DownX - hexRadius, DownY - hexRadius, DownX + hexRadius, DownY + hexRadius); // 예: 손가락 주변 100px 영역만 갱신
@@ -108,16 +136,20 @@ public class HexMapView extends View {
             case MotionEvent.ACTION_UP:
                 multiTouch=false;
                 Unit selectedUnit = GameSetting.getSelectedunit();
+
                 if (selectedUnit != null) {
                     for (int row = 0; row < NUM_ROWS; row++) {
                         for (int col = 0; col < NUM_COLS; col++) {
                             HexTile targetTile = GameSetting.getHexTile(row, col);
                             if(targetTile.isHovered()) {
                                 if (targetTile.isMovable()) {
+                                    selectedUnit.setMovable(false);
+                                    // 유닛을 이동 가능한 타일로 이동 시키면
                                     GameSetting.moveUnit(selectedUnit, row, col);
                                     GameSetting.setSelectedunit(null); // 선택 해제
                                     // 이동 가능 상태 초기화
                                     GameSetting.resetMovableTiles();
+                                    GameSetting.resetAttackableTiles();
 
                                     // TextView에 텍스트 설정
                                     if(selectedUnit.getUser() == "user1"){
@@ -125,18 +157,45 @@ public class HexMapView extends View {
                                         MainActivity.howmany_tile.setText("점령한 타일 수 : " + howmManyTiles);
                                     }
 
+                                    showUnitStatusPanel(selectedUnit);
+                                    invalidate(); // 화면 다시 그리기
+                                    return true;
+                                }
+
+                                if(targetTile.Isproduction()){
+                                    showProductionStatusPanel(targetTile);
+                                    GameSetting.setSelectedProductionTile(targetTile);
                                     invalidate(); // 화면 다시 그리기
                                     return true;
                                 }
 
                                 if(GameSetting.getUnit(row, col)==null){
+                                    // 해당 타일에 유닛이 없는 경우 (왜 만들었지?)
                                     System.out.println("아님");
                                     // 이동 가능 상태 초기화
+                                    clearStatusPanel();
                                     GameSetting.resetMovableTiles();
+                                    GameSetting.resetAttackableTiles();
                                     invalidate(); // 화면 다시 그리기
                                     return true;
                                 }
+
                             }
+                        }
+                    }
+                }
+                else{
+                    for (int row = 0; row < NUM_ROWS; row++) {
+                        for (int col = 0; col < NUM_COLS; col++) {
+                            HexTile targetTile = GameSetting.getHexTile(row, col);
+
+                            if(targetTile.isHovered() && targetTile.Isproduction()){
+                                showProductionStatusPanel(targetTile);
+                                GameSetting.setSelectedProductionTile(targetTile);
+                                invalidate(); // 화면 다시 그리기
+                                return true;
+                            }
+                            clearStatusPanel();
                         }
                     }
                 }
@@ -144,6 +203,38 @@ public class HexMapView extends View {
         }
 
         return true;
+    }
+
+    public void showUnitStatusPanel(Unit unit){
+        ((MainActivity) getContext()).showProductionOptions(false);
+        MainActivity.textName.setText("이름 : "+unit.getName());
+        MainActivity.textOwner.setText("소유자 : "+unit.getUser());
+        MainActivity.textView1.setText("체력 : "+unit.getHealth());
+        MainActivity.textView2.setText("공격력 : "+unit.getDamage());
+    }
+
+    public void showProductionStatusPanel(HexTile hexTile){
+        boolean showbutton = false;
+        if(hexTile.getUser() == GameSetting.getWhoAmI()){
+            showbutton = true;
+            ((MainActivity) getContext()).showProductionOptions(showbutton);
+            MainActivity.textName.setText("이름 : 생산");
+            MainActivity.textOwner.setText("소유자 : "+hexTile.getUser());
+            MainActivity.textView1.setText("비용 : "+GameSetting.getCost());
+            MainActivity.button2.setText("생산하기");
+        }
+        else{
+            MainActivity.textName.setText("이름 : 생산");
+            MainActivity.textOwner.setText("소유자 : 없음");
+        }
+    }
+
+    public void clearStatusPanel(){
+        ((MainActivity) getContext()).showProductionOptions(false);
+        MainActivity.textName.setText(" ");
+        MainActivity.textOwner.setText(" ");
+        MainActivity.textView1.setText(" ");
+        MainActivity.textView2.setText(" ");
     }
 
     public void createHexMap(int rows, int cols, int gameOffsetX, int gameOffsetY, Canvas canvas, Paint paint) {
@@ -238,7 +329,8 @@ public class HexMapView extends View {
         }
 
         if (GameSetting.isInitial()) {
-            User user1 = new User("user1","blue");
+            GameSetting.setCurrentPlayer(user1.getName());
+
             GameSetting.addUser(user1.getName(), user1);
             HexTile randomTile1 = GameSetting.getHexTile(randomRow1, randomCol1);
 
@@ -258,7 +350,6 @@ public class HexMapView extends View {
                 unit1.draw(canvas, paint, gameOffsetX, gameOffsetY);
             }
 
-            User user2 = new User("user2", "red");
             GameSetting.addUser(user2.getName(), user2);
             HexTile randomTile2 = GameSetting.getHexTile(randomRow2, randomCol2);
 
@@ -316,6 +407,49 @@ public class HexMapView extends View {
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             // 확대/축소 종료 시 호출
+        }
+    }
+
+    public void nextTurn(){
+        GameSetting.nextTurn();
+        invalidate();
+    }
+
+    public void produceUnit(){
+        if(GameSetting.getSelectedProductionTile() != null) {
+            System.out.println("produce");
+            HexTile productionTile = GameSetting.getSelectedProductionTile();
+
+            int x = productionTile.getX();
+            int y = productionTile.getY();
+
+            int row = productionTile.getRow();
+            int col = productionTile.getCol();
+
+            int gameOffsetX = GameSetting.getMapOffset_X();
+            int gameOffsetY = GameSetting.getMapOffset_Y();
+
+            // 새로운 유닛 생성 및 설정
+            Unit newUnit = new Unit(x, y);
+            GameSetting.setUnit(row, col, newUnit);
+
+            newUnit.setUser(user1.getName());
+            user1.addHowManyUnits(1);
+            MainActivity.howmany_unit.setText("소유한 유닛 수 : " + user1.getHowManyUnits());
+            newUnit.setColor(user1.getColor());
+
+            newUnit.setUnitRadius(GameSetting.getUnitRadius());
+            newUnit.setRow(row);
+            newUnit.setCol(col);
+
+            invalidate();
+
+            //newUnit.draw(canvas, paint, gameOffsetX, gameOffsetY);
+
+            // 유닛 생산 후 상태 업데이트
+            //Toast.makeText(this, "유닛이 생산되었습니다!", Toast.LENGTH_SHORT).show();
+            //GameSetting.resetMovableTiles();
+            //GameSetting.resetHoverTiles();
         }
     }
 }

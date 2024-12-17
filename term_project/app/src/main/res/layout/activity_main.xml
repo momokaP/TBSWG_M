@@ -148,6 +148,8 @@
                 android:layout_weight="1">
 
                 <!-- 텍스트 뷰를 첫 번째 뷰로 설정 -->
+
+                <!-- 버튼을 두 번째 뷰로 설정 -->
                 <TextView
                     android:id="@+id/textView2"
                     android:layout_width="match_parent"
@@ -155,7 +157,6 @@
                     android:gravity="center"
                     android:text="TextView" />
 
-                <!-- 버튼을 두 번째 뷰로 설정 -->
                 <Button
                     android:id="@+id/button2"
                     android:layout_width="match_parent"
