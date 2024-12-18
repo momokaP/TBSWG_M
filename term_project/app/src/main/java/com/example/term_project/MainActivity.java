@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     // Toast 메시지를 1초 동안 표시
                     final Toast toast = Toast.makeText(v.getContext(), "타일 수가 부족합니다!", Toast.LENGTH_SHORT);
                     toast.show();
-                    new Handler().postDelayed(toast::cancel, 500); // 1초 후에 취소
+                    new Handler().postDelayed(toast::cancel, 500); // 0.5초 후에 취소
                 }
 
             }

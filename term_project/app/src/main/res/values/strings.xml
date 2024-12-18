@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">term_project</string>
+
+    <string-array name="color_options">
+        <item>Red</item>
+        <item>Green</item>
+        <item>Blue</item>
+        <item>Yellow</item>
+        <item>Cyan</item>
+        <item>Magenta</item>
+        <item>Orange</item>
+        <item>Blue-Green</item>
+    </string-array>
 </resources>
