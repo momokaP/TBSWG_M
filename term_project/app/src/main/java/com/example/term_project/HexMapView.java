@@ -5,9 +5,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // 육각형 맵을 그리는 클래스
 public class HexMapView extends View {
@@ -93,7 +97,7 @@ public class HexMapView extends View {
                             GameSetting.setSelectedunit(unit);
                             GameSetting.resetHoverTiles();
                             // 이동 가능 타일 강조
-                            if(unit.isMovable()){
+                            if(unit.isMovable() && unit.getUser()==GameSetting.getWhoAmI()){
                                 GameSetting.highlightMovableTiles(unit);
                             }
                             invalidate(); // 화면 다시 그리기
@@ -340,7 +344,6 @@ public class HexMapView extends View {
 
                 unit1.setUser(user1.getName());
                 user1.addHowManyUnits(1);
-                MainActivity.howmany_unit.setText("소유한 유닛 수 : " + user1.getHowManyUnits());
                 unit1.setColor(user1.getColor());
 
                 unit1.setUnitRadius(GameSetting.getUnitRadius());
@@ -415,6 +418,132 @@ public class HexMapView extends View {
         invalidate();
     }
 
+    public void computerAi(Runnable onComplete){
+        String computerName = user2.getName();
+        Handler handler = new Handler();
+        int delay = 100;
+
+        for (int row = 0; row < NUM_ROWS; row++) {
+            for (int col = 0; col < NUM_COLS; col++) {
+                Unit unit = GameSetting.getUnit(row, col);
+                HexTile tile = GameSetting.getHexTile(row, col);
+                if (tile != null && tile.Isproduction()){
+                    if(tile.getUser()==computerName){
+                        handler.postDelayed(() -> {
+                            if (GameSetting.getUnit(tile.getRow(), tile.getCol()) == null) {
+                                GameSetting.setSelectedProductionTile(tile);
+                                if (user2.getHowManyTiles() > GameSetting.getComputerAiCost()) {
+                                    produceUnit();
+                                    GameSetting.multiplyComputerAiCost(2);
+                                }
+                            }
+                            invalidate();
+                        }, delay);
+                        delay += 200;
+                    }
+                }
+
+                if (unit != null) {
+                    if(unit.getUser()==computerName && unit.isMovable()){
+                        handler.postDelayed(() -> {
+                            GameSetting.setSelectedunit(unit);
+                            Unit selectedUnit = GameSetting.getSelectedunit();
+                            GameSetting.highlightMovableTiles(selectedUnit);
+
+                            List<HexTile> movableAndAttackableTiles = new ArrayList<>();
+
+                            for (int i = 0; i < NUM_ROWS; i++) {
+                                for (int j = 0; j < NUM_COLS; j++) {
+                                    HexTile targetTile = GameSetting.getHexTile(i, j);
+                                    if (targetTile != null) {
+                                        if (targetTile.isMovable()) {
+                                            movableAndAttackableTiles.add(targetTile);
+                                        }
+                                        if (targetTile.isAttackable()) {
+                                            movableAndAttackableTiles.add(targetTile);
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!movableAndAttackableTiles.isEmpty()) {
+                                // 타일을 소유 상태에 따라 그룹화
+                                List<HexTile> neutralTiles = new ArrayList<>();
+                                List<HexTile> ownTiles = new ArrayList<>();
+                                List<HexTile> enemyTiles = new ArrayList<>();
+
+                                int Default = 0;
+
+                                for (HexTile maTile : movableAndAttackableTiles) {
+                                    if (maTile.getUser() == null) { // 소유자가 없는 타일
+                                        neutralTiles.add(maTile);
+                                    } else if (maTile.getUser() == computerName) { // 자기 소유 타일
+                                        ownTiles.add(maTile);
+                                    } else { // 상대 소유 타일
+                                        enemyTiles.add(maTile);
+                                    }
+                                }
+
+                                HexTile targetTile = null;
+                                // 확률적으로 선택: 소유자 없는 타일을 더 선호
+                                double randomValue = Math.random();
+                                if (!neutralTiles.isEmpty() && randomValue < 0.6) { // 60% 확률로 소유자 없는 타일 선택
+                                    targetTile = neutralTiles.get((int) (Math.random() * neutralTiles.size()));
+                                } else if (!ownTiles.isEmpty() && randomValue < 0.9) { // 30% 확률로 자기 소유 타일 선택
+                                    targetTile = ownTiles.get((int) (Math.random() * ownTiles.size()));
+                                } else if (!enemyTiles.isEmpty()) { // 10% 확률로 상대 타일 선택
+                                    targetTile = enemyTiles.get((int) (Math.random() * enemyTiles.size()));
+                                } else {
+                                    int randomIndex = (int) (Math.random() * movableAndAttackableTiles.size());
+                                    targetTile = movableAndAttackableTiles.get(randomIndex);
+                                    Default = 1;
+                                }
+
+                                // 각 리스트의 상태를 로그로 출력해봅니다
+                                System.out.println("Neutral Tiles: " + neutralTiles.size());
+                                System.out.println("Own Tiles: " + ownTiles.size());
+                                System.out.println("Enemy Tiles: " + enemyTiles.size());
+                                System.out.println("Default: " + Default);
+
+                                //int randomIndex = (int) (Math.random() * movableAndAttackableTiles.size());
+                                //HexTile targetTile = movableAndAttackableTiles.get(randomIndex);
+
+                                int targetRow = targetTile.getRow();
+                                int targetCol = targetTile.getCol();
+
+                                if (targetTile.isMovable()) {
+                                    GameSetting.moveUnit(selectedUnit, targetRow, targetCol);
+                                } else if (targetTile.isAttackable()) {
+                                    Unit victimUnit = GameSetting.getUnit(targetRow, targetCol);
+                                    if (victimUnit.getUser() != computerName) {
+                                        victimUnit.addHealth(-1);
+
+                                        if (victimUnit.isDead()) {
+                                            GameSetting.setUnit(targetRow, targetCol, null);
+                                            System.out.println("상대 유닛이 제거되었습니다.");
+                                        } else {
+                                            System.out.println("유닛이 공격받았습니다. 남은 체력: " + victimUnit.getHealth());
+                                        }
+                                    }
+                                }
+                            }
+
+                            selectedUnit.setMovable(false);
+                            GameSetting.setSelectedunit(null);
+                            GameSetting.resetMovableTiles();
+                            GameSetting.resetAttackableTiles();
+                            MainActivity.howmany_computerai_tile.setText("상대가 점령한 타일 수 : " + user2.getHowManyTiles());
+                            invalidate();
+                        }, delay);
+                        delay += 200;
+                    }
+                }
+            }
+        }
+        // 마지막 작업 예약
+        handler.postDelayed(onComplete, delay);
+    }
+
     public void produceUnit(){
         if(GameSetting.getSelectedProductionTile() != null) {
             System.out.println("produce");
@@ -433,10 +562,11 @@ public class HexMapView extends View {
             Unit newUnit = new Unit(x, y);
             GameSetting.setUnit(row, col, newUnit);
 
-            newUnit.setUser(user1.getName());
-            user1.addHowManyUnits(1);
-            MainActivity.howmany_unit.setText("소유한 유닛 수 : " + user1.getHowManyUnits());
-            newUnit.setColor(user1.getColor());
+            User user = GameSetting.getUser(productionTile.getUser());
+
+            newUnit.setUser(user.getName());
+            user.addHowManyUnits(1);
+            newUnit.setColor(user.getColor());
 
             newUnit.setUnitRadius(GameSetting.getUnitRadius());
             newUnit.setRow(row);

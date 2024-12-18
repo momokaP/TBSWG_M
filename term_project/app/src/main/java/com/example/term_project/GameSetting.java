@@ -36,6 +36,7 @@ public class GameSetting {
     private static final int range = 1;
 
     private static int cost = 2;
+    private static int computerAiCost = 1;
 
     private static String WhoAmI = "user1";
 
@@ -94,6 +95,14 @@ public class GameSetting {
 
     public static void multiplyCost(int cost) {
         GameSetting.cost *= cost;
+    }
+
+    public static int getComputerAiCost() {
+        return computerAiCost;
+    }
+
+    public static void multiplyComputerAiCost(int computerAiCost) {
+        GameSetting.computerAiCost *= computerAiCost;
     }
 
     public static boolean isInitial() {

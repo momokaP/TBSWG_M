@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import retrofit2.Call;
 import retrofit2.Retrofit;
@@ -24,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     public static TextView leftturn;
     public static TextView nowturn;
     public static TextView howmany_tile;
-    public static TextView howmany_unit;
+    public static TextView howmany_computerai_tile;
     public static TextView textName;
     public static TextView textOwner;
     public static TextView textView1;
@@ -56,10 +57,10 @@ public class MainActivity extends AppCompatActivity {
         turnbutton.setText("턴 넘기기");
         
         howmany_tile = findViewById(R.id.howmany_tile);
-        howmany_tile.setText("점령한 타일 수 : 0");
+        howmany_tile.setText("내가 점령한 타일 수 : 0");
 
-        howmany_unit = findViewById(R.id.howmany_unit);
-        howmany_unit.setText("소유한 유닛 수 : 0");
+        howmany_computerai_tile = findViewById(R.id.howmany_computerai_tile);
+        howmany_computerai_tile.setText("상대가 점령한 타일 수 : 0");
 
         textName = findViewById(R.id.name);
         textName.setText(" ");
@@ -78,13 +79,32 @@ public class MainActivity extends AppCompatActivity {
         turnbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //if(GameSetting.getWhoAmI()==GameSetting.getCurrentPlayer()){
-                //}
-                hexMapView.nextTurn();
-                nowturn.setText("현재 턴 : "+GameSetting.getTurn());
+                if(GameSetting.getWhoAmI() == GameSetting.getCurrentPlayer()) {
+                    hexMapView.nextTurn();
+                    nowturn.setText("현재 턴 : " + GameSetting.getTurn());
 
-                // GPT API 호출
-                callGPTAPI("턴제 게잉메서 상대방을 도발하는 대사를 20글자 이내로 창의적으로 작성해줘.");
+                    if (GameSetting.getCurrentPlayer() != GameSetting.getWhoAmI()) {
+                        turnbutton.setVisibility(View.INVISIBLE);
+
+                        // 플래그 초기화
+                        final AtomicBoolean isAICompleted = new AtomicBoolean(false);
+                        final AtomicBoolean isAPICalled = new AtomicBoolean(false);
+
+                        // AI 작업 실행
+                        hexMapView.computerAi(() -> {
+                            isAICompleted.set(true);
+                            checkAndShowTurnButton(isAICompleted, isAPICalled);
+                        });
+
+                        // GPT API 호출
+                        callGPTAPI("턴제 게임에서 상대방을 도발하는 대사를 20글자 이내로 창의적으로 작성해줘.", () -> {
+                            isAPICalled.set(true);
+                            checkAndShowTurnButton(isAICompleted, isAPICalled);
+                        });
+
+                        hexMapView.nextTurn();
+                    }
+                }
             }
         });
 
@@ -106,6 +126,13 @@ public class MainActivity extends AppCompatActivity {
         showHexMap(hexMapView);
     }
 
+    // 모든 작업 완료 시 버튼 표시
+    private void checkAndShowTurnButton(AtomicBoolean isAICompleted, AtomicBoolean isAPICalled) {
+        if (isAICompleted.get() && isAPICalled.get()) {
+            turnbutton.setVisibility(View.VISIBLE);
+        }
+    }
+
     public void showProductionOptions(boolean isProduction) {
         if (isProduction) {
             button2.setVisibility(View.VISIBLE);
@@ -123,8 +150,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // GPT API 호출 메서드
-    private void callGPTAPI(String prompt) {
-        String apiKey = "asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
+    private void callGPTAPI(String prompt, Runnable onComplete) {
+        String apiKey =
+                "asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
         Retrofit retrofit = RetrofitClient.getClient(apiKey);
         GPTService gptService = retrofit.create(GPTService.class);
 
@@ -179,11 +207,13 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println(e.getMessage());
                     }
                 }
+                onComplete.run();  // 작업 완료 콜백 실행
             }
 
             @Override
             public void onFailure(Call<GPTResponse> call, Throwable t) {
                 line1.setText("도발 대사 요청 실패!");
+                onComplete.run();  // 작업 완료 콜백 실행
             }
         });
     }

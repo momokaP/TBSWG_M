@@ -12,7 +12,7 @@ public class GPTRequest {
     private String prompt;
 
     public GPTRequest(String prompt) {
-        this.model = "gpt-3.5-turbo"; // GPT 모델 선택
+        this.model = "gpt-4o-mini"; // GPT 모델 선택
         this.messages = List.of(new Message("user", prompt));
     }
 
