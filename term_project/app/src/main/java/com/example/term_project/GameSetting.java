@@ -48,6 +48,16 @@ public class GameSetting {
 
     private static String WhoAmI = "user1";
 
+    public static String getWhoIsEnemy() {
+        return WhoIsEnemy;
+    }
+
+    public static void setWhoIsEnemy(String whoIsEnemy) {
+        WhoIsEnemy = whoIsEnemy;
+    }
+
+    private static String WhoIsEnemy = "user2";
+
     private static int turn = 2;
 
     public static String getCurrentPlayer() {
@@ -392,7 +402,12 @@ public class GameSetting {
         hexMap = new HexTile[rows][cols];  // 새로운 9x9 맵 배열 초기화
         unitMap = new Unit[rows][cols];     // 새로운 유닛 맵 배열 초기화
 
-        users.clear();                      // 유저 리스트 초기화
+        //users.clear();                      // 유저 리스트 초기화
+        for (String userName : users.keySet()) {
+            User user = users.get(userName);
+            if(user!=null) user.reset();
+        }
+
 
         userOrder.clear();                  // 유저 순서 리스트 초기화
         selectedunit = null;                // 선택된 유닛 초기화

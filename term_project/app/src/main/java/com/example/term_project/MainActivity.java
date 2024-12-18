@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static MainActivity instance;
 
+    private static AlertDialog dialog;
 
     private static FrameLayout mapContainer;
     @Override
@@ -48,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
         GameSetting.setContext(this);
 
         line1 = findViewById(R.id.line1);
+        line1.setText(" ");
         line2 = findViewById(R.id.line2);
+        line2.setText(" ");
 
         leftturn = findViewById(R.id.leftturn);
         leftturn.setText("남은 턴");
@@ -167,7 +170,8 @@ public class MainActivity extends AppCompatActivity {
     // GPT API 호출 메서드
     private void callGPTAPI(String prompt, Runnable onComplete) {
         String apiKey =
-                "asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
+                "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"
+                ;//"asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
         Retrofit retrofit = RetrofitClient.getClient(apiKey);
         GPTService gptService = retrofit.create(GPTService.class);
 
@@ -183,16 +187,6 @@ public class MainActivity extends AppCompatActivity {
                     // 응답 본문이 null이 아닌지 확인
 
                     GPTResponse gptResponse = response.body();
-
-                    // 전체 응답을 JSON 형식으로 로그로 확인
-                    //String fullResponse = new Gson().toJson(gptResponse);
-                    //Log.d("GPTResponse", "Full Response: " + fullResponse);
-
-                    // 다른 필드들도 출력
-                    //Log.d("GPTResponse", "Response ID: " + gptResponse.getId());
-                    //Log.d("GPTResponse", "Response Object: " + gptResponse.getObject());
-                    //Log.d("GPTResponse", "Response Created: " + gptResponse.getCreated());
-                    //Log.d("GPTResponse", "Response Model: " + gptResponse.getModel());
 
                     if (gptResponse.getChoices() != null && !gptResponse.getChoices().isEmpty()) {
                         // 선택지가 비어 있지 않다면, 첫 번째 선택지를 가져옴
@@ -234,14 +228,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void showGameEndDialog(String winnerName, String reason) {
-        new AlertDialog.Builder(MainActivity.getInstance())  // MainActivity의 Context를 가져옴
+        MainActivity activity = MainActivity.getInstance();
+
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return; // 액티비티가 종료된 경우 다이얼로그 표시를 중단
+        }
+
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss(); // 기존에 표시 중인 다이얼로그가 있으면 닫기
+        }
+
+        dialog = new AlertDialog.Builder(MainActivity.getInstance())  // MainActivity의 Context를 가져옴
                 .setTitle("게임 종료")
                 .setMessage("우승자: " + winnerName + "\n이유: " + reason)
                 .setPositiveButton("확인", (dialog, which) -> {
-                    resetGame(MainActivity.getInstance());
                     // 메뉴 화면으로 이동
                     Intent intent = new Intent(MainActivity.getInstance(), MenuActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    resetGame(MainActivity.getInstance());
                     MainActivity.getInstance().startActivity(intent);
                 })
                 .setCancelable(false)
@@ -272,11 +276,21 @@ public class MainActivity extends AppCompatActivity {
 
         // 2. 지도 및 맵 초기화
         HexMapView hexMapView = new HexMapView(context);
+        GameSetting.reset();
         mapContainer.removeAllViews();
         mapContainer.addView(hexMapView); // HexMapView를 다시 추가
 
         // 3. 턴, 비용, AI 작업 등 초기화 (게임 시작 전 상태)
         turnbutton.setVisibility(View.VISIBLE);
         button2.setVisibility(View.GONE); // 적절한 초기화 (필요한 경우)
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        instance = null;  // 액티비티가 종료될 때 참조 제거
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss(); // 다이얼로그가 표시되고 있으면 닫기
+        }
     }
 }

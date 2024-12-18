@@ -19,6 +19,7 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // 게임 화면으로 이동
+                GameSetting.reset();
                 Intent intent = new Intent(MenuActivity.this, MainActivity.class);
                 startActivity(intent);
             }

@@ -26,9 +26,6 @@ public class HexMapView extends View {
     private ScaleGestureDetector scaleGestureDetector;
     private boolean multiTouch = false;
 
-    User user1 = new User("user1","blue");
-    User user2 = new User("user2", "red");
-
     public HexMapView(Context context) {
         super(context);
         paint = new Paint();
@@ -335,6 +332,14 @@ public class HexMapView extends View {
         }
 
         if (GameSetting.isInitial()) {
+            User user1 = new User("user1","blue");
+            User user2 = new User("user2", "red");
+
+            System.out.println("처음처음처음처음처음처음처음처음처음처음");
+
+            GameSetting.setWhoAmI(user1.getName());
+            GameSetting.setWhoIsEnemy(user2.getName());
+
             GameSetting.setCurrentPlayer(user1.getName());
 
             GameSetting.addUser(user1.getName(), user1);
@@ -427,9 +432,10 @@ public class HexMapView extends View {
     }
 
     public void computerAi(Runnable onComplete){
-        String computerName = user2.getName();
+        User userAi = GameSetting.getUser(GameSetting.getWhoIsEnemy());
+        String computerName = userAi.getName();
         System.out.println(computerName);
-        System.out.println("h"+user2.getHowManyTiles());
+        System.out.println("h"+userAi.getHowManyTiles());
         Handler handler = new Handler();
         int delay = 100;
 
@@ -442,7 +448,7 @@ public class HexMapView extends View {
                         handler.postDelayed(() -> {
                             if (GameSetting.getUnit(tile.getRow(), tile.getCol()) == null) {
                                 GameSetting.setSelectedProductionTile(tile);
-                                if (user2.getHowManyTiles() > GameSetting.getComputerAiCost()) {
+                                if (userAi.getHowManyTiles() > GameSetting.getComputerAiCost()) {
                                     produceUnit();
                                     GameSetting.multiplyComputerAiCost(2);
                                 }
@@ -542,7 +548,7 @@ public class HexMapView extends View {
                             GameSetting.setSelectedunit(null);
                             GameSetting.resetMovableTiles();
                             GameSetting.resetAttackableTiles();
-                            MainActivity.howmany_computerai_tile.setText("상대가 점령한 타일 수 : " + user2.getHowManyTiles());
+                            MainActivity.howmany_computerai_tile.setText("상대가 점령한 타일 수 : " + userAi.getHowManyTiles());
                             invalidate();
                         }, delay);
                         delay += 200;

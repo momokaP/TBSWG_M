@@ -34,4 +34,9 @@ public class User {
     public void addHowManyTiles(int howManyTiles) {
         this.howManyTiles += howManyTiles;
     }
+
+    public void reset(){
+        this.howManyUnits=0;
+        this.howManyTiles=0;
+    }
 }
