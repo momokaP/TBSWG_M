@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         turnbutton.setText("턴 넘기기");
         
         howmany_tile = findViewById(R.id.howmany_tile);
-        howmany_tile.setText("내가 점령한 타일 수 : 0");
+        howmany_tile.setText("점령한 타일 수 : 0");
 
         howmany_computerai_tile = findViewById(R.id.howmany_computerai_tile);
         howmany_computerai_tile.setText("상대가 점령한 타일 수 : 0");
@@ -178,8 +178,7 @@ public class MainActivity extends AppCompatActivity {
 
     // GPT API 호출 메서드
     private void callGPTAPI(String prompt, Runnable onComplete) {
-        String apiKey =
-                "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"
+        String apiKey = BuildConfig.GPT_API_KEY;
                 ;//"asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
         Retrofit retrofit = RetrofitClient.getClient(apiKey);
         GPTService gptService = retrofit.create(GPTService.class);

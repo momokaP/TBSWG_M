@@ -155,7 +155,7 @@ public class HexMapView extends View {
                                     GameSetting.resetAttackableTiles();
 
                                     // TextView에 텍스트 설정
-                                    if(selectedUnit.getUser() == "user1"){
+                                    if(selectedUnit.getUser() == GameSetting.getWhoAmI()){
                                         int howmManyTiles = GameSetting.getUser(selectedUnit.getUser()).getHowManyTiles();
                                         MainActivity.howmany_tile.setText("점령한 타일 수 : " + howmManyTiles);
                                     }
