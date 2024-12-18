@@ -228,7 +228,12 @@ public class HexMapView extends View {
         }
         else{
             MainActivity.textName.setText("이름 : 생산");
-            MainActivity.textOwner.setText("소유자 : 없음");
+            if(hexTile.getUser()!=null) {
+                MainActivity.textOwner.setText("소유자 : "+hexTile.getUser());
+            }
+            else{
+                MainActivity.textOwner.setText("소유자 : 없음");
+            }
         }
     }
 
@@ -335,7 +340,7 @@ public class HexMapView extends View {
             User user1 = new User("user1","blue");
             User user2 = new User("user2", "red");
 
-            System.out.println("처음처음처음처음처음처음처음처음처음처음");
+            //System.out.println("처음처음처음처음처음처음처음처음처음처음");
 
             GameSetting.setWhoAmI(user1.getName());
             GameSetting.setWhoIsEnemy(user2.getName());
@@ -344,6 +349,8 @@ public class HexMapView extends View {
 
             GameSetting.addUser(user1.getName(), user1);
             HexTile randomTile1 = GameSetting.getHexTile(randomRow1, randomCol1);
+
+            MainActivity.whosturn.setText(GameSetting.getWhoAmI()+" 의 턴");
 
             if (randomTile1 != null) {
                 Unit unit1 = new Unit(randomTile1.getX(), randomTile1.getY());
@@ -583,6 +590,10 @@ public class HexMapView extends View {
             newUnit.setUser(user.getName());
             user.addHowManyUnits(1);
             newUnit.setColor(user.getColor());
+            newUnit.setOnUnitChangeListener(() -> {
+                invalidate(); // 상태 변경 시 화면 갱신
+            });
+
 
             newUnit.setUnitRadius(GameSetting.getUnitRadius());
             newUnit.setRow(row);

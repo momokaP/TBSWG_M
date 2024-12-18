@@ -1,15 +1,16 @@
 package com.example.term_project;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,7 +23,7 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
-    public static TextView leftturn;
+    public static TextView whosturn;
     public static TextView nowturn;
     public static TextView howmany_tile;
     public static TextView howmany_computerai_tile;
@@ -53,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
         line2 = findViewById(R.id.line2);
         line2.setText(" ");
 
-        leftturn = findViewById(R.id.leftturn);
-        leftturn.setText("남은 턴");
+        whosturn = findViewById(R.id.whosturn);
+        whosturn.setText(" ");
         
         nowturn = findViewById(R.id.nowturn);
         nowturn.setText("현재 턴 : 1");
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
                         hexMapView.nextTurn();
                     }
-
+                    whosturn.setText(GameSetting.getCurrentPlayer()+" 의 턴");
                     nowturn.setText("현재 턴 : " + (int)(GameSetting.getTurn()/2));
                 }
 
@@ -126,6 +127,13 @@ public class MainActivity extends AppCompatActivity {
                     hexMapView.produceUnit();
                     GameSetting.multiplyCost(2);
                     MainActivity.textView1.setText("비용 : "+GameSetting.getCost());
+                }
+                else{
+                    // Toast 메시지 표시
+                    // Toast 메시지를 1초 동안 표시
+                    final Toast toast = Toast.makeText(v.getContext(), "타일 수가 부족합니다!", Toast.LENGTH_SHORT);
+                    toast.show();
+                    new Handler().postDelayed(toast::cancel, 500); // 1초 후에 취소
                 }
 
             }
@@ -148,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
             turnbutton.setVisibility(View.VISIBLE);
             String next = GameSetting.getNextPlayer();
             GameSetting.setCurrentPlayer(next);
+            whosturn.setText(GameSetting.getCurrentPlayer()+" 의 턴");
         }
     }
 
@@ -262,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static void resetUI(Context context) {
         // 1. UI 요소 초기화
-        leftturn.setText("남은 턴");
+        whosturn.setText("남은 턴");
         nowturn.setText("현재 턴 : 1");
         turnbutton.setText("턴 넘기기");
         howmany_tile.setText("내가 점령한 타일 수 : 0");

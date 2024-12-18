@@ -402,7 +402,7 @@ public class GameSetting {
         hexMap = new HexTile[rows][cols];  // 새로운 9x9 맵 배열 초기화
         unitMap = new Unit[rows][cols];     // 새로운 유닛 맵 배열 초기화
 
-        //users.clear();                      // 유저 리스트 초기화
+        users.clear();                      // 유저 리스트 초기화
         for (String userName : users.keySet()) {
             User user = users.get(userName);
             if(user!=null) user.reset();

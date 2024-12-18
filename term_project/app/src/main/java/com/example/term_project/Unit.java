@@ -146,7 +146,7 @@ public class Unit {
 
     // 유닛 그리기
     public void draw(Canvas canvas, Paint paint, float offsetX, float offsetY) {
-        if(isDamaged) UNIT_RADIUS = (int) (UNIT_RADIUS * 0.7);
+        if(isDamaged) UNIT_RADIUS = (int) (UNIT_RADIUS * 0.1);
 
         // 원을 그리기 위해 drawCircle 사용
         paint.setStyle(Paint.Style.STROKE);
@@ -154,8 +154,6 @@ public class Unit {
         canvas.drawCircle(x + offsetX, y + offsetY, UNIT_RADIUS, paint);
 
         paint.setStyle(Paint.Style.FILL);
-
-
 
         if(isMovable){
             paint.setColor(getColorFromString(color));
