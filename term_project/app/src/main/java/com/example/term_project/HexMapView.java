@@ -337,8 +337,14 @@ public class HexMapView extends View {
         }
 
         if (GameSetting.isInitial()) {
-            User user1 = new User("user1","blue");
-            User user2 = new User("user2", "red");
+            String user1Name = GameSetting.getNAME();
+            String user1Color = GameSetting.getCOLOR();
+
+            String user2Name = "anti-"+user1Name;
+            String user2Color = "anti-"+user1Color;
+
+            User user1 = new User(user1Name, user1Color);
+            User user2 = new User(user2Name, user2Color);
 
             //System.out.println("처음처음처음처음처음처음처음처음처음처음");
 

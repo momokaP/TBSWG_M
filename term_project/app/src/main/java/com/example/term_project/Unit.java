@@ -158,7 +158,7 @@ public class Unit {
         if(isMovable){
             paint.setColor(getColorFromString(color));
         } else{
-            paint.setColor(getColorFromString(invertColor(color)));
+            paint.setColor(darkenColor(getColorFromString(color)));
         }
 
         canvas.drawCircle(x + offsetX, y + offsetY, UNIT_RADIUS, paint);
@@ -166,6 +166,8 @@ public class Unit {
 
     // 색상 문자열을 실제 색상 값으로 변환
     private int getColorFromString(String color) {
+        return ColorUtils.getColorFromName(color);
+        /*
         switch (color) {
             case "red":
                 return Color.RED;
@@ -184,12 +186,14 @@ public class Unit {
             default:
                 return Color.WHITE;
         }
+        */
     }
 
-    private String invertColor(String color) {
-        if (color.equals("red")) return "darkred";
-        if (color.equals("blue")) return "darkblue";
-        return color;
+    private int darkenColor(int color) {
+        return ColorUtils.darkenColor(color);
+        //if (color.equals("red")) return "darkred";
+        //if (color.equals("blue")) return "darkblue";
+        //return color;
     }
 
     // 클릭 상태 업데이트

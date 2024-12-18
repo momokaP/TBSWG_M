@@ -15,6 +15,25 @@ public class GameSetting {
         appContext = context.getApplicationContext();
     }
 
+    public static String getCOLOR() {
+        return COLOR;
+    }
+
+    public static void setCOLOR(String COLOR) {
+        GameSetting.COLOR = COLOR;
+    }
+
+    public static String getNAME() {
+        return NAME;
+    }
+
+    public static void setNAME(String NAME) {
+        GameSetting.NAME = NAME;
+    }
+
+    private static String COLOR;
+    private static String NAME;
+
     private static int hexRadius = 100;
     private static int unitRadius = 70;
     private static HexTile[][] hexMap;
@@ -270,6 +289,7 @@ public class GameSetting {
                 }
                 targetTile.setUser(unit.getUser());
                 targetTile.setColor(unit.getColor());
+                //targetTile.setUnitMoved(true);
                 getUser(unit.getUser()).addHowManyTiles(1);
             }
         } else {
@@ -397,18 +417,24 @@ public class GameSetting {
         MainActivity.showGameEndDialog(winnerName, reason);
     }
 
+    public static void initialize(String[] settings){
+        //System.out.println("초기화초기화초기화초기화초기화초기화초기화");
+        setNAME(settings[0]);
+        setCOLOR(settings[1]);
+
+        //System.out.println(getNAME());
+        //System.out.println(getCOLOR());
+    }
+
     public static void reset() {
         // 1. 게임 관련 상태 초기화
         hexMap = new HexTile[rows][cols];  // 새로운 9x9 맵 배열 초기화
         unitMap = new Unit[rows][cols];     // 새로운 유닛 맵 배열 초기화
-
         users.clear();                      // 유저 리스트 초기화
         for (String userName : users.keySet()) {
             User user = users.get(userName);
             if(user!=null) user.reset();
         }
-
-
         userOrder.clear();                  // 유저 순서 리스트 초기화
         selectedunit = null;                // 선택된 유닛 초기화
         selectedProductionTile = null;      // 선택된 생산 타일 초기화

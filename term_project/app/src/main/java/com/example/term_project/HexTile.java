@@ -18,6 +18,16 @@ public class HexTile {
     private boolean isMovable = false; // 이동 가능 여부
     private boolean isAttackable = false; // 공격 가능 여부
 
+    public boolean isUnitMoved() {
+        return isUnitMoved;
+    }
+
+    public void setUnitMoved(boolean unitMoved) {
+        isUnitMoved = unitMoved;
+    }
+
+    private boolean isUnitMoved = false;
+
     private boolean isproduction = false;
 
     private String user;
@@ -86,12 +96,14 @@ public class HexTile {
     }
 
     // 색상 반전 함수
-    private String invertColor(String color) {
-        if (color.equals("lightblue")) return "darkblue";
-        if (color.equals("yellow")) return "orange";
-        if (color.equals("gold")) return "orange";
-        if (color.equals("silver")) return "gray";
-        return color;
+    private int invertColor(int color) {
+        return ColorUtils.darkenColor(color);
+
+        //if (color.equals("lightblue")) return "darkblue";
+        //if (color.equals("yellow")) return "orange";
+        //if (color.equals("gold")) return "orange";
+        //if (color.equals("silver")) return "gray";
+        //return color;
     }
 
     // 육각형 그리기
@@ -124,12 +136,19 @@ public class HexTile {
         paint.setStyle(Paint.Style.FILL);
 
         String displayColor;
-        if (isHovered) {
-            displayColor = invertColor(color); // 마우스 오버 시 색상 반전
+        int displayColor2;
+
+        displayColor = color;
+
+        if (isHovered && GameSetting.getUnit(row,col)==null) {
+            displayColor2 = invertColor(getColorFromString(color)); // 마우스 오버 시 색상 반전
+            paint.setColor(displayColor2);
         } else {
             displayColor = color; // 기본 색상
+            paint.setColor(getColorFromString(displayColor));
         }
-        paint.setColor(getColorFromString(displayColor));
+
+        //isUnitMoved = false;
 
         canvas.drawPath(hexPath, paint);
 
@@ -239,6 +258,8 @@ public class HexTile {
 
     // 색상 문자열을 실제 색상 값으로 변환
     private int getColorFromString(String color) {
+        return ColorUtils.lightenColor(ColorUtils.getColorFromName(color));
+        /*
         switch (color) {
             case "red":
                 return Color.parseColor("#E04375");
@@ -263,6 +284,7 @@ public class HexTile {
             default:
                 return Color.WHITE;
         }
+         */
     }
 
     // hover 상태 업데이트
