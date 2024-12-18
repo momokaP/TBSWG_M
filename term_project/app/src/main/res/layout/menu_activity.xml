@@ -7,6 +7,15 @@
     android:padding="16dp">
 
     <TextView
+        android:id="@+id/realtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chat gpt api를 이용한 타일 점령 게임"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
