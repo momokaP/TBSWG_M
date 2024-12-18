@@ -5,6 +5,18 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 public class Unit {
+    private OnUnitChangeListener listener; // 상태 변경 알림을 위한 인터페이스
+
+    // 인터페이스 정의
+    public interface OnUnitChangeListener {
+        void onUnitChanged(); // 상태 변경 시 호출
+    }
+
+    // 리스너 설정
+    public void setOnUnitChangeListener(OnUnitChangeListener listener) {
+        this.listener = listener;
+    }
+
     private String name = "유닛";
 
     private int x, y; // 유닛의 중심 좌표
@@ -20,6 +32,16 @@ public class Unit {
     private int damage = 1;
 
     private boolean isMovable = true; // 이동 가능 여부
+
+    public boolean isDamaged() {
+        return isDamaged;
+    }
+
+    public void setDamaged(boolean damaged) {
+        isDamaged = damaged;
+    }
+
+    private boolean isDamaged = false;
 
     private String user;
 
@@ -45,6 +67,34 @@ public class Unit {
 
     public void addHealth(int health) {
         this.health += health;
+        // 피격 시 애니메이션 트리거
+        if (health < 0) {
+            triggerHitAnimation();
+        }
+    }
+
+    // 피격 애니메이션 메서드
+    // 피격 애니메이션
+    private void triggerHitAnimation() {
+        int originalRadius = UNIT_RADIUS;
+
+        // 변경 알림
+        if (listener != null) {
+            listener.onUnitChanged();
+        }
+
+        isDamaged = true;
+
+        // 200ms 후 복구
+        new android.os.Handler().postDelayed(() -> {
+            UNIT_RADIUS = originalRadius;
+            isDamaged = false;
+
+            // 복구 알림
+            if (listener != null) {
+                listener.onUnitChanged();
+            }
+        }, 200);
     }
 
     public int getDamage() {
@@ -96,6 +146,8 @@ public class Unit {
 
     // 유닛 그리기
     public void draw(Canvas canvas, Paint paint, float offsetX, float offsetY) {
+        if(isDamaged) UNIT_RADIUS = (int) (UNIT_RADIUS * 0.7);
+
         // 원을 그리기 위해 drawCircle 사용
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.BLACK); // 원의 테두리 색깔
@@ -103,9 +155,11 @@ public class Unit {
 
         paint.setStyle(Paint.Style.FILL);
 
+
+
         if(isMovable){
             paint.setColor(getColorFromString(color));
-        }else{
+        } else{
             paint.setColor(getColorFromString(invertColor(color)));
         }
 

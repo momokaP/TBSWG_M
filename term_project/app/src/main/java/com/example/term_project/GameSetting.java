@@ -1,5 +1,7 @@
 package com.example.term_project;
 
+import android.content.Context;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +9,12 @@ import java.util.Map;
 import java.util.Objects;
 
 public class GameSetting {
+    private static Context appContext;
+
+    public static void setContext(Context context) {
+        appContext = context.getApplicationContext();
+    }
+
     private static int hexRadius = 100;
     private static int unitRadius = 70;
     private static HexTile[][] hexMap;
@@ -40,7 +48,7 @@ public class GameSetting {
 
     private static String WhoAmI = "user1";
 
-    private static int turn = 0;
+    private static int turn = 2;
 
     public static String getCurrentPlayer() {
         return currentPlayer;
@@ -314,22 +322,91 @@ public class GameSetting {
         addTurn(1);
 
         // 다음 유저로 턴 넘기기
-        currentPlayer = getNextPlayer();
+        //currentPlayer = getNextPlayer();
 
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 Unit unit = getUnit(row, col);
                 if (unit != null) {
                     unit.setMovable(true);
+                    unit.setDamaged(false);
+                }
+            }
+        }
+
+        // 게임 종료 조건 확인
+        checkGameEnd();
+    }
+
+    public static String getNextPlayer() {
+        int currentIndex = userOrder.indexOf(currentPlayer);
+        int nextIndex = (currentIndex + 1) % userOrder.size();
+        return userOrder.get(nextIndex);
+    }
+
+    public static void checkGameEnd() {
+        // 유저들 각각의 상태를 확인
+        for (String userName : users.keySet()) {
+            User user = users.get(userName);
+
+            // 1. 타일 점령 수가 41개 이상인 경우
+            if (user.getHowManyTiles() >= 41) {
+                endGame(userName, "타일 점령 수가 41개를 초과했습니다.");
+                return;
+            }
+
+            // 2. 유저가 보유한 유닛이 없는 경우
+            boolean hasUnits = false;
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    Unit unit = getUnit(row, col);
+                    if (unit != null && Objects.equals(unit.getUser(), userName)) {
+                        hasUnits = true;
+                        break;
+                    }
+                }
+                if (hasUnits) break;
+            }
+
+            if (!hasUnits) {
+                // 현재 유닛이 없는 유저가 userName
+                // 상대 유저를 승자로 설정
+                for (String opponentName : users.keySet()) {
+                    if (!Objects.equals(opponentName, userName)) {
+                        endGame(opponentName, userName + "의 유닛이 모두 사라졌습니다.");
+                        return;
+                    }
                 }
             }
         }
     }
 
-    private static String getNextPlayer() {
-        int currentIndex = userOrder.indexOf(currentPlayer);
-        int nextIndex = (currentIndex + 1) % userOrder.size();
-        return userOrder.get(nextIndex);
+    // 게임 종료 처리
+    private static void endGame(String winnerName, String reason) {
+        System.out.println("Game Over! Winner: " + winnerName + " - " + reason);
+        MainActivity.showGameEndDialog(winnerName, reason);
+    }
+
+    public static void reset() {
+        // 1. 게임 관련 상태 초기화
+        hexMap = new HexTile[rows][cols];  // 새로운 9x9 맵 배열 초기화
+        unitMap = new Unit[rows][cols];     // 새로운 유닛 맵 배열 초기화
+
+        users.clear();                      // 유저 리스트 초기화
+
+        userOrder.clear();                  // 유저 순서 리스트 초기화
+        selectedunit = null;                // 선택된 유닛 초기화
+        selectedProductionTile = null;      // 선택된 생산 타일 초기화
+        mapOffset_X = 0;                    // 맵 오프셋 초기화
+        mapOffset_Y = 0;                    // 맵 오프셋 초기화
+        initial = true;                     // 초기 상태 플래그 설정
+
+        // 2. 게임 설정 관련 초기화
+        cost = 2;                           // 기본 비용
+        computerAiCost = 1;                 // AI의 기본 비용
+        WhoAmI = "user1";                   // 현재 사용자 설정
+        turn = 2;                           // 첫 번째 턴으로 설정
+        currentPlayer = null;
     }
 
 }

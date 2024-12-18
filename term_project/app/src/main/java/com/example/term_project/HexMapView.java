@@ -97,7 +97,9 @@ public class HexMapView extends View {
                             GameSetting.setSelectedunit(unit);
                             GameSetting.resetHoverTiles();
                             // 이동 가능 타일 강조
-                            if(unit.isMovable() && unit.getUser()==GameSetting.getWhoAmI()){
+                            if( unit.isMovable() &&
+                                unit.getUser() == GameSetting.getWhoAmI() &&
+                                GameSetting.getWhoAmI() == GameSetting.getCurrentPlayer()){
                                 GameSetting.highlightMovableTiles(unit);
                             }
                             invalidate(); // 화면 다시 그리기
@@ -345,6 +347,9 @@ public class HexMapView extends View {
                 unit1.setUser(user1.getName());
                 user1.addHowManyUnits(1);
                 unit1.setColor(user1.getColor());
+                unit1.setOnUnitChangeListener(() -> {
+                    invalidate(); // 상태 변경 시 화면 갱신
+                });
 
                 unit1.setUnitRadius(GameSetting.getUnitRadius());
                 unit1.setRow(randomTile1.getRow());
@@ -363,6 +368,9 @@ public class HexMapView extends View {
                 unit2.setUser(user2.getName());
                 user2.addHowManyUnits(1);
                 unit2.setColor(user2.getColor());
+                unit2.setOnUnitChangeListener(() -> {
+                    invalidate(); // 상태 변경 시 화면 갱신
+                });
 
                 unit2.setUnitRadius(GameSetting.getUnitRadius());
                 unit2.setRow(randomTile2.getRow());
@@ -420,6 +428,8 @@ public class HexMapView extends View {
 
     public void computerAi(Runnable onComplete){
         String computerName = user2.getName();
+        System.out.println(computerName);
+        System.out.println("h"+user2.getHowManyTiles());
         Handler handler = new Handler();
         int delay = 100;
 

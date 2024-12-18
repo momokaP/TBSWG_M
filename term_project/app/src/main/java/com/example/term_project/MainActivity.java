@@ -1,5 +1,9 @@
 package com.example.term_project;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -7,11 +11,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.gson.Gson;
 
@@ -35,14 +35,17 @@ public class MainActivity extends AppCompatActivity {
     public static TextView line1;
     public static TextView line2;
 
+    private static MainActivity instance;
 
-    private FrameLayout mapContainer;
+
+    private static FrameLayout mapContainer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         HexMapView hexMapView = new HexMapView(this);
+        GameSetting.setContext(this);
 
         line1 = findViewById(R.id.line1);
         line2 = findViewById(R.id.line2);
@@ -51,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         leftturn.setText("남은 턴");
         
         nowturn = findViewById(R.id.nowturn);
-        nowturn.setText("현재 턴");
+        nowturn.setText("현재 턴 : 1");
         
         turnbutton = findViewById(R.id.turnbutton);
         turnbutton.setText("턴 넘기기");
@@ -81,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if(GameSetting.getWhoAmI() == GameSetting.getCurrentPlayer()) {
                     hexMapView.nextTurn();
-                    nowturn.setText("현재 턴 : " + GameSetting.getTurn());
+                    String next = GameSetting.getNextPlayer();
+                    GameSetting.setCurrentPlayer(next);
 
                     if (GameSetting.getCurrentPlayer() != GameSetting.getWhoAmI()) {
                         turnbutton.setVisibility(View.INVISIBLE);
@@ -104,7 +108,10 @@ public class MainActivity extends AppCompatActivity {
 
                         hexMapView.nextTurn();
                     }
+
+                    nowturn.setText("현재 턴 : " + (int)(GameSetting.getTurn()/2));
                 }
+
             }
         });
 
@@ -121,15 +128,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        instance = this;
+
         // 레이아웃 요소 초기화
         mapContainer = findViewById(R.id.mapContainer);
         showHexMap(hexMapView);
+    }
+
+    public static MainActivity getInstance() {
+        return instance;
     }
 
     // 모든 작업 완료 시 버튼 표시
     private void checkAndShowTurnButton(AtomicBoolean isAICompleted, AtomicBoolean isAPICalled) {
         if (isAICompleted.get() && isAPICalled.get()) {
             turnbutton.setVisibility(View.VISIBLE);
+            String next = GameSetting.getNextPlayer();
+            GameSetting.setCurrentPlayer(next);
         }
     }
 
@@ -152,7 +167,8 @@ public class MainActivity extends AppCompatActivity {
     // GPT API 호출 메서드
     private void callGPTAPI(String prompt, Runnable onComplete) {
         String apiKey =
-                "asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
+                "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" ;
+                //"asdf"; // 환경 변수나 안전한 저장소에서 가져오는 것을 권장
         Retrofit retrofit = RetrofitClient.getClient(apiKey);
         GPTService gptService = retrofit.create(GPTService.class);
 
@@ -216,5 +232,52 @@ public class MainActivity extends AppCompatActivity {
                 onComplete.run();  // 작업 완료 콜백 실행
             }
         });
+    }
+
+    public static void showGameEndDialog(String winnerName, String reason) {
+        new AlertDialog.Builder(MainActivity.getInstance())  // MainActivity의 Context를 가져옴
+                .setTitle("게임 종료")
+                .setMessage("우승자: " + winnerName + "\n이유: " + reason)
+                .setPositiveButton("확인", (dialog, which) -> {
+                    resetGame(MainActivity.getInstance());
+                    // 메뉴 화면으로 이동
+                    Intent intent = new Intent(MainActivity.getInstance(), MenuActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    MainActivity.getInstance().startActivity(intent);
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    public static void resetGame(Context context) {
+        // 1. 게임 설정 초기화
+        GameSetting.reset(); // GameSetting 클래스에 reset 메서드 추가 필요
+
+        // 2. UI 초기화 (MainActivity에서 수행)
+        resetUI(context);
+    }
+
+    private static void resetUI(Context context) {
+        // 1. UI 요소 초기화
+        leftturn.setText("남은 턴");
+        nowturn.setText("현재 턴 : 1");
+        turnbutton.setText("턴 넘기기");
+        howmany_tile.setText("내가 점령한 타일 수 : 0");
+        howmany_computerai_tile.setText("상대가 점령한 타일 수 : 0");
+        textName.setText(" ");
+        textOwner.setText(" ");
+        textView1.setText(" ");
+        textView2.setText(" ");
+        line1.setText(" ");
+        line2.setText(" ");
+
+        // 2. 지도 및 맵 초기화
+        HexMapView hexMapView = new HexMapView(context);
+        mapContainer.removeAllViews();
+        mapContainer.addView(hexMapView); // HexMapView를 다시 추가
+
+        // 3. 턴, 비용, AI 작업 등 초기화 (게임 시작 전 상태)
+        turnbutton.setVisibility(View.VISIBLE);
+        button2.setVisibility(View.GONE); // 적절한 초기화 (필요한 경우)
     }
 }
