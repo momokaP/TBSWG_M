@@ -1,6 +1,7 @@
 # TBSWG_M
 
 [프로젝트 개요](https://github.com/momokaP/TBSWG_M/blob/main/TBSWG_M%20%EC%84%A4%EB%AA%851.pdf)
+[자세한 설명](https://github.com/momokaP/TBSWG_M/blob/main/TBSWG_M%20%EC%84%A4%EB%AA%852.pdf)
 
 - 9x9 육각형 타일 맵에서 타일을 점령하거나
 - 상대 유닛을 공격하여
